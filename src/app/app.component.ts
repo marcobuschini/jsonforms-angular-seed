@@ -4,11 +4,10 @@ import { and, createAjv, isControl, optionIs, rankWith, schemaTypeIs, scopeEndsW
 import { CustomAutocompleteControlRenderer } from './custom.autocomplete';
 import { DataDisplayComponent } from './data.control';
 import { LangComponent } from './lang.control';
-import uischemaAsset from '../assets/uischema.json';
-import schemaAsset from '../assets/schema.json';
-import dataAsset from './data';
 import { parsePhoneNumber } from 'libphonenumber-js';
 import { DateAdapter } from '@angular/material/core';
+import { Observable, Subject } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
 
 const departmentTester: Tester = and(
   schemaTypeIs('string'),
@@ -45,18 +44,21 @@ export class AppComponent {
       )
     },
   ];
-  uischema = uischemaAsset;
-  schema = schemaAsset;
-  data = dataAsset;
+  uischema: Observable<any>;
+  schema: Observable<any>;
+  data: Observable<any>;
   i18n = {locale: 'de-DE'}
   dateAdapter;
   ajv = createAjv({
     schemaId: 'id',
     allErrors: true
   });
-  constructor(dateAdapter: DateAdapter<Date>) {
+  constructor(dateAdapter: DateAdapter<Date>, http: HttpClient) {
     this.ajv.addFormat('time', '^([0-1][0-9]|2[0-3]):[0-5][0-9]$');
     this.dateAdapter = dateAdapter;
+    this.data = http.get<object>('assets/data.json');
+    this.uischema = http.get<object>('assets/uischema.json');
+    this.schema = http.get<object>('assets/schema.json');
     dateAdapter.setLocale(this.i18n.locale);
     this.ajv.addFormat('tel', maybePhoneNumber => {
       try {
